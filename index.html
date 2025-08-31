@@ -1,233 +1,242 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-  <meta charset="utf-8" />  
-  <title>Parcel Tracking - Georgia to Hungary</title>  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-  <!-- Leaflet CSS -->  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>  
-  <style>  
-     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-     
-    body {  
-      margin: 0;  
-   font-family: 'Inter', sans-serif;   
-      background: #f4f6f9;  
-      display: flex;  
-      flex-direction: column;  
-      min-height: 100vh;  
-    }  
-    header {  
-      background: #1a73e8;  
-      color: white;  
-      padding: 15px;  
-      text-align: center;  
-      font-size: 22px;  
-      font-weight: bold;  
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);  
-    }  
-    .center-wrapper {  
-      flex: 1;  
-      display: flex;  
-      justify-content: center;  
-      align-items: center;  
-      transition: all 0.8s ease;  
-    }  
-    .tracker-container {  
-      background: white;  
-      padding: 25px;  
-      width: 90%;  
-      max-width: 600px;  
-      border-radius: 12px;  
-      box-shadow: 0 6px 15px rgba(0,0,0,0.15);  
-      text-align: center;  
-      transition: transform 0.8s ease, margin 0.8s ease;  
-    }  
-    .tracker-container.active {  
-      margin-top: 40px;  
-      transform: scale(1.02);  
-    }  
-    h3 {  
-      margin-bottom: 15px;  
-      font-size: 20px;  
-      color: #333;  
-    }  
-    input[type="text"] {  
-      width: 65%;  
-      padding: 12px;  
-      border: 2px solid #1a73e8;  
-      border-radius: 6px;  
-      outline: none;  
-      font-size: 16px;  
-      transition: border 0.3s ease;  
-    }  
-    input[type="text"]:focus {  
-      border-color: #155ab6;  
-    }  
-    button {  
-      padding: 12px 20px;  
-      border: none;  
-      background: #1a73e8;  
-      color: white;  
-      font-size: 16px;  
-      border-radius: 6px;  
-      margin-left: 8px;  
-      cursor: pointer;  
-      transition: background 0.3s ease, transform 0.2s ease;  
-    }  
-    button:hover {  
-      background: #155ab6;  
-      transform: translateY(-2px);  
-    }  
-    #trackingResult {  
-      margin-top: 20px;  
-      font-size: 16px;  
-      color: #333;  
-      text-align: left;  
-      padding: 12px;  
-      background: #f9f9f9;  
-      border-left: 4px solid #1a73e8;  
-      border-radius: 6px;  
-      display: none;  
-      opacity: 0;  
-      transform: translateY(20px);  
-      transition: opacity 0.8s ease, transform 0.8s ease;  
-    }  
-    #trackingResult.show {  
-      display: block;  
-      opacity: 1;  
-      transform: translateY(0);  
-    }  
-    #map {  
-      height: 70vh;  
-      width: 100%;  
-      margin-top: 20px;  
-      border-top: 3px solid #1a73e8;  
-      display: none;  
-      opacity: 0;  
-      transition: opacity 1s ease;  
-    }  
-    #map.show {  
-      display: block;  
-      opacity: 1;  
-    }  
-  </style>  
-</head>  
-<body>  
-  <header>SwiftTrack</header>    <div class="center-wrapper" id="wrapper">  
-    <div class="tracker-container" id="trackerBox">  
-      <h3>Track Your Shipment</h3>  
-      <input type="text" id="trackingNumber" placeholder="Enter Tracking Number">  
-      <button onclick="trackPackage()">Track</button>  
-     
-  
-      <div id="trackingResult"></div>  
-    </div>  
-  </div>    <div id="map"></div>  
-<div id="change"style="position: absolute; opacity: 0;">change</div>  
-  <!-- Leaflet JS -->  
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>    <script>  
-    // Initialize map  
-    var map = L.map('map').setView([45, 25], 5);  
-  
-    // Add free OpenStreetMap tiles  
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {  
-      maxZoom: 18,  
-      attribution: '&copy; OpenStreetMap contributors'  
-    }).addTo(map);  
-  
-    // Coordinates  
-    var georgia = [41.7151, 44.8271]; // Tbilisi  
-    var debrecen = [47.5316, 21.6273]; // Varmegyeháza utca 14, Debrecen  
-  
-    // Markers  
-    var markerGeorgia = L.marker(georgia).addTo(map).bindPopup("<b>Tbilisi, Georgia</b>");  
-    var markerDebrecen = L.marker(debrecen).addTo(map).bindPopup("<b>Debrecen, Hungary</b><br>Varmegyeháza utca 14, 4024");  
-  
-    // Route line  
-    var route = L.polyline([georgia, debrecen], {color: 'blue', weight: 5}).addTo(map);  
-  
-    // Fit map to route  
-    map.fitBounds(route.getBounds());  
-  
-    // Tracking simulation  
-    function trackPackage() {  
-      let number = document.getElementById("trackingNumber").value.trim();  
-      let resultBox = document.getElementById("trackingResult");  
-      let trackerBox = document.getElementById("trackerBox");  
-      let mapDiv = document.getElementById("map");  
-      let wrapper = document.getElementById("wrapper");  
-  
-      if(number === "") {  
-        resultBox.style.display = "block";  
-        resultBox.innerHTML = "⚠️ Please enter a tracking number.";  
-        resultBox.classList.add("show");  
-        return;  
-      }  
-  
-      if(number === "1294772552") {  
-        // Animate box upward  
-        trackerBox.classList.add("active");  
-        wrapper.style.alignItems = "flex-start";  
-  
-        // Show tracking result  
-        setTimeout(() => {  
-          resultBox.innerHTML = `  
-            <b>Tracking Number:</b> ${number}<br>  
-            <b>Status:</b> In Transit 🚚<br>  
-            <b>From:</b> Tbilisi, Georgia<br>  
-            <b>To:</b> Varmegyeháza utca 14, 4024 Debrecen, Hungary<br>  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Parcel Tracking - Georgia to Hungary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .center-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.8s ease;
+    }
+
+    .tracker-container {
+      background: white;
+      padding: 25px;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      text-align: center;
+      transition: transform 0.8s ease, margin 0.8s ease;
+    }
+
+    .tracker-container.active {
+      margin-top: 40px;
+      transform: scale(1.02);
+    }
+
+    h3 {
+      margin-bottom: 15px;
+      font-size: 20px;
+      color: #333;
+    }
+
+    input[type="text"] {
+      width: 65%;
+      padding: 12px;
+      border: 2px solid #1a73e8;
+      border-radius: 6px;
+      outline: none;
+      font-size: 16px;
+      transition: border 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: #155ab6;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      background: #1a73e8;
+      color: white;
+      font-size: 16px;
+      border-radius: 6px;
+      margin-left: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: #155ab6;
+      transform: translateY(-2px);
+    }
+
+    #trackingResult {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #333;
+      text-align: left;
+      padding: 12px;
+      background: #f9f9f9;
+      border-left: 4px solid #1a73e8;
+      border-radius: 6px;
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    #trackingResult.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #map {
+      height: 70vh;
+      width: 100%;
+      margin-top: 20px;
+      border-top: 3px solid #1a73e8;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    #map.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>SwiftTrack</header>
+  <div class="center-wrapper" id="wrapper">
+    <div class="tracker-container" id="trackerBox">
+      <h3>Track Your Shipment</h3>
+      <input type="text" id="trackingNumber" placeholder="Enter Tracking Number">
+      <button onclick="trackPackage()">Track</button>
+      <div id="trackingResult"></div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const georgia = [41.7151, 44.8271]; // Tbilisi
+    const debrecen = [47.5316, 21.6273]; // Debrecen
+    const apiKey = '4f1c09049d0c49bc815e33e55ed4b68c'; // Replace with your Geoapify API key
+    let map;
+
+    function trackPackage() {
+      const number = document.getElementById("trackingNumber").value.trim();
+      const resultBox = document.getElementById("trackingResult");
+      const trackerBox = document.getElementById("trackerBox");
+      const mapDiv = document.getElementById("map");
+      const wrapper = document.getElementById("wrapper");
+
+      if(number === "") {
+        resultBox.style.display = "block";
+        resultBox.innerHTML = "⚠️ Please enter a tracking number.";
+        resultBox.classList.add("show");
+        return;
+      }
+
+      if(number === "1294772552") {
+        trackerBox.classList.add("active");
+        wrapper.style.alignItems = "flex-start";
+
+        // Show tracking info
+        setTimeout(() => {
+          resultBox.innerHTML = `
+            <b>Tracking Number:</b> ${number}<br>
+            <b>Status:</b> In Transit 🚚<br>
+            <b>From:</b> Tbilisi, Georgia<br>
+            <b>To:</b> Varmegyeháza utca 14, 4024 Debrecen, Hungary<br>
             <b>Product details:</b> 3g Favorites and Stoney Patch Gummies <br>    
-            <b>Estimated Delivery:</b> September 3rd - 4th, 2025<br>  
-            <b>Currently at:</b> Tbilisi, Georgia<br>  
-          `;  
-          resultBox.classList.add("show");  
-        }, 600);  
-  
-        // Show map with fade-in  
-        setTimeout(() => {  
-          mapDiv.classList.add("show");  
-          map.invalidateSize(); // fix rendering bug  
-        }, 1200);  
-  
-        // Move animated marker  
-        animateMarker(georgia, debrecen);  
-      } else {  
-        resultBox.style.display = "block";  
-        resultBox.innerHTML = "❌ Invalid Tracking Number. Please try again.";  
-        resultBox.classList.add("show");  
-      }  
-    }  
-  
-    // Function to animate marker along the route  
-    function animateMarker(start, end) {  
-      if (window.trackingMarker) {  
-        map.removeLayer(window.trackingMarker);  
-      }  
-      var trackingMarker = L.marker(start, {icon: L.icon({  
-        iconUrl: "https://cdn-icons-png.flaticon.com/512/679/679922.png",  
-        iconSize: [32, 32]  
-      })}).addTo(map);  
-  
-      window.trackingMarker = trackingMarker;  
-  
-      // Create smooth path with intermediate points  
-      var latlngs = [];  
-      var steps = 200;  
-      for (let i = 0; i <= steps; i++) {  
-        let lat = start[0] + (end[0] - start[0]) * (i/steps);  
-        let lng = start[1] + (end[1] - start[1]) * (i/steps);  
-        latlngs.push([lat, lng]);  
-      }  
-  
-      let index = 0;  
-      var interval = setInterval(() => {  
-        if(index >= latlngs.length) {  
-          clearInterval(interval);  
-          return;  
-        }  
-        trackingMarker.setLatLng(latlngs[index]);  
-        index++;  
-      }, 100);  
-    }  
-  </script>  </body>  
+            <b>Estimated Delivery:</b> September 3rd - 4th, 2025<br>
+            <b>Currently at:</b> Tbilisi, Georgia<br>
+          `;
+          resultBox.classList.add("show");
+        }, 600);
+
+        // Show map and initialize
+        setTimeout(() => {
+          mapDiv.classList.add("show");
+
+          if(!map) {
+            map = L.map('map').setView([45,25],5);
+
+            // Geoapify tiles
+            L.tileLayer(`https://maps.geoapify.com/v1/tile/osm-bright-smooth/{z}/{x}/{y}.png?apiKey=${apiKey}`, {
+              attribution: 'Map data &copy; OpenStreetMap contributors',
+              maxZoom: 19
+            }).addTo(map);
+
+            // Markers
+            L.marker(georgia).addTo(map).bindPopup("<b>Tbilisi, Georgia</b>");
+            L.marker(debrecen).addTo(map).bindPopup("<b>Debrecen, Hungary</b>");
+
+            // Route line
+            const route = L.polyline([georgia, debrecen], {color:'blue', weight:5}).addTo(map);
+            map.fitBounds(route.getBounds());
+          } else {
+            map.invalidateSize(); // refresh map after fade-in
+          }
+
+          animateMarker(georgia, debrecen);
+
+        }, 1200);
+
+      } else {
+        resultBox.style.display = "block";
+        resultBox.innerHTML = "❌ Invalid Tracking Number. Please try again.";
+        resultBox.classList.add("show");
+      }
+    }
+
+    function animateMarker(start, end) {
+      if(window.trackingMarker) map.removeLayer(window.trackingMarker);
+
+      const trackingMarker = L.marker(start, {
+        icon: L.icon({
+          iconUrl: "https://cdn-icons-png.flaticon.com/512/679/679922.png",
+          iconSize: [32,32]
+        })
+      }).addTo(map);
+
+      window.trackingMarker = trackingMarker;
+
+      const steps = 200;
+      const latlngs = [];
+      for(let i=0; i<=steps; i++){
+        latlngs.push([start[0]+(end[0]-start[0])*(i/steps), start[1]+(end[1]-start[1])*(i/steps)]);
+      }
+
+      let index = 0;
+      const interval = setInterval(()=>{
+        if(index >= latlngs.length) return clearInterval(interval);
+        trackingMarker.setLatLng(latlngs[index]);
+        index++;
+      }, 100);
+    }
+  </script>
+</body>
 </html>
